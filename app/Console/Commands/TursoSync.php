@@ -25,62 +25,56 @@ class TursoSync extends Command
 
         $this->info('Syncing to Turso: ' . $this->tursoUrl);
 
-        // Get all tables from local SQLite
         $tables = DB::select("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'migrations'");
 
         foreach ($tables as $table) {
-            $tableName = $table->name;
-            $this->syncTable($tableName);
+            $this->syncTable($table->name);
         }
 
-        $this->info('Sync complete!');
+        $this->info('Turso sync complete!');
         return 0;
     }
 
     private function syncTable(string $table)
     {
-        // Get create table SQL
         $schema = DB::selectOne("SELECT sql FROM sqlite_master WHERE type='table' AND name=?", [$table]);
         if (!$schema) return;
 
-        // Create table in Turso (IF NOT EXISTS)
+        // Create table in Turso
         $createSql = str_replace("CREATE TABLE", "CREATE TABLE IF NOT EXISTS", $schema->sql);
         $this->tursoExec($createSql);
 
         // Get all rows
         $rows = DB::table($table)->get();
         if ($rows->isEmpty()) {
-            $this->line("  {$table}: 0 rows (skipped)");
+            $this->line("  {$table}: 0 rows");
             return;
         }
 
-        // Get columns
-        $columns = array_keys((array) $rows->first());
-
-        // Delete existing data in Turso and re-insert
+        // Clear existing data
         $this->tursoExec("DELETE FROM \"{$table}\"");
 
-        // Insert in batches of 20
-        $batches = $rows->chunk(20);
+        // Insert rows one by one
+        $columns = array_keys((array) $rows->first());
         $total = 0;
 
-        foreach ($batches as $batch) {
-            $statements = [];
-            foreach ($batch as $row) {
-                $values = array_map(function ($val) {
-                    if (is_null($val)) return 'NULL';
-                    return "'" . str_replace("'", "''", (string) $val) . "'";
-                }, array_values((array) $row));
-
-                $cols = implode('","', $columns);
-                $vals = implode(',', $values);
-                $statements[] = "INSERT INTO \"{$table}\" (\"{$cols}\") VALUES ({$vals})";
+        foreach ($rows as $row) {
+            $values = [];
+            foreach ($columns as $col) {
+                $val = $row->$col;
+                if (is_null($val)) {
+                    $values[] = 'NULL';
+                } else {
+                    $values[] = "'" . str_replace("'", "''", (string) $val) . "'";
+                }
             }
 
-            foreach ($statements as $sql) {
-                $this->tursoExec($sql);
-                $total++;
-            }
+            $colList = '"' . implode('", "', $columns) . '"';
+            $valList = implode(', ', $values);
+            $sql = "INSERT INTO \"{$table}\" ({$colList}) VALUES ({$valList})";
+
+            $result = $this->tursoExec($sql);
+            if ($result !== null) $total++;
         }
 
         $this->line("  {$table}: {$total} rows synced");
@@ -105,7 +99,7 @@ class TursoSync extends Command
         curl_close($ch);
 
         if ($httpCode !== 200) {
-            $this->error("  Turso error ({$httpCode}): " . substr($response, 0, 200));
+            $this->error("  Error ({$httpCode}): " . substr($sql, 0, 80) . "...");
             return null;
         }
 
