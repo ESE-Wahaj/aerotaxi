@@ -19,6 +19,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Use /tmp for storage on serverless (Vercel)
+        if (isset($_ENV['VERCEL']) || getenv('VERCEL')) {
+            config([
+                'view.compiled' => '/tmp/storage/framework/views',
+                'cache.stores.file.path' => '/tmp/storage/framework/cache',
+                'session.files' => '/tmp/storage/framework/sessions',
+                'logging.channels.single.path' => '/tmp/storage/logs/laravel.log',
+            ]);
+        }
     }
 }
