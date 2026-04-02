@@ -32,19 +32,6 @@ return [
 
     'connections' => [
 
-        'libsql' => [
-            'driver' => 'libsql',
-            'url' => env('DB_DATABASE', 'file:' . database_path('database.sqlite')),
-            'authToken' => env('DB_AUTH_TOKEN', ''),
-            'syncUrl' => env('DB_SYNC_URL', ''),
-            'syncInterval' => env('DB_SYNC_INTERVAL', 5),
-            'read_your_writes' => true,
-            'encryptionKey' => '',
-            'remoteOnly' => true,
-            'database' => null,
-            'prefix' => '',
-        ],
-
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),
