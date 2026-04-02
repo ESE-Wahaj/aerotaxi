@@ -239,17 +239,11 @@
 
                     this.stripe = Stripe(publishableKey);
 
-                    // Create payment intent on server
-                    const res = await fetch('/payment/create-intent', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify({ reference: @json($booking->reference) })
-                    });
-
-                    const { clientSecret } = await res.json();
+                    const clientSecret = @json($clientSecret);
+                    if (!clientSecret) {
+                        document.getElementById('payment-element').innerHTML = '<p class="text-red-500 text-sm text-center py-4">Unable to initialize payment. Please refresh and try again.</p>';
+                        return;
+                    }
 
                     this.elements = this.stripe.elements({
                         clientSecret,
@@ -277,7 +271,6 @@
                     // Demo mode
                     if (!this.stripe) {
                         this.processing = true;
-                        await new Promise(r => setTimeout(r, 2000));
                         window.location.href = '/booking/confirmation/' + @json($booking->reference);
                         return;
                     }

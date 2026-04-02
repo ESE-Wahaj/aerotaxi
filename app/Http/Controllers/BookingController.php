@@ -95,8 +95,28 @@ class BookingController extends Controller
         $reference = $request->query('reference');
         $booking = Booking::where('reference', $reference)->with('vehicle')->firstOrFail();
         $stripeKey = config('services.stripe.key');
+        $clientSecret = null;
 
-        return view('booking.payment', compact('booking', 'stripeKey'));
+        // Pre-create PaymentIntent to avoid extra AJAX round-trip
+        if ($stripeKey && $stripeKey !== 'pk_test_REPLACE_WITH_YOUR_KEY') {
+            try {
+                $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+                $intent = $stripe->paymentIntents->create([
+                    'amount' => (int) round($booking->total_price * 100),
+                    'currency' => 'gbp',
+                    'metadata' => [
+                        'booking_reference' => $booking->reference,
+                        'from' => $booking->from_location,
+                        'to' => $booking->to_location,
+                    ],
+                ]);
+                $clientSecret = $intent->client_secret;
+            } catch (\Exception $e) {
+                // Will fall back to demo mode
+            }
+        }
+
+        return view('booking.payment', compact('booking', 'stripeKey', 'clientSecret'));
     }
 
     public function createPaymentIntent(Request $request)
