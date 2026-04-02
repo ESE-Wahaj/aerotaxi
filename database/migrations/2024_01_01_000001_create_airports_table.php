@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('airports', function (Blueprint $table) {
+            $table->id();
+            $table->string('code', 3);
+            $table->string('name');
+            $table->string('city');
+            $table->string('country')->default('United Kingdom');
+            $table->text('description');
+            $table->string('image');
+            $table->integer('sort_order');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('airports');
+    }
+};
