@@ -156,9 +156,10 @@
                                     :class="processing ? 'opacity-70 cursor-not-allowed' : 'hover:bg-yellow-500 hover:shadow-md active:scale-[0.98]'"
                                     class="w-full mt-6 bg-yellow-400 text-gray-900 font-semibold rounded-xl px-6 py-4 transition-all text-base flex items-center justify-center gap-2">
                                 <i x-show="processing" class="fa-solid fa-spinner fa-spin"></i>
-                                <span x-text="processing ? 'Processing...' : 'Confirm payment'"></span>
+                                <span x-text="processing ? processingText : 'Confirm payment'"></span>
                                 <i x-show="!processing" class="fa-solid fa-chevron-right text-sm"></i>
                             </button>
+                            <p x-show="processing" x-cloak class="text-center text-xs text-gray-400 mt-2">Please don't close this page. This usually takes 5-10 seconds.</p>
                         </div>
 
                         {{-- Trust Badges --}}
@@ -202,6 +203,7 @@
                 elements: null,
                 paymentElement: null,
                 processing: false,
+                processingText: 'Processing...',
                 paymentError: '',
                 agreePromotions: false,
                 map: null,
@@ -283,6 +285,9 @@
                     }
 
                     this.processing = true;
+                    this.processingText = 'Verifying card...';
+                    setTimeout(() => { if (this.processing) this.processingText = 'Processing payment...'; }, 2000);
+                    setTimeout(() => { if (this.processing) this.processingText = 'Almost done...'; }, 5000);
 
                     try {
                         const { error } = await this.stripe.confirmPayment({
