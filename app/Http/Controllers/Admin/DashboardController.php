@@ -171,6 +171,6 @@ class DashboardController extends Controller
     {
         AdminNotification::where('read', false)->update(['read' => true]);
 
-        return response()->json(['success' => true]);
+        return redirect()->back();
     }
 }
