@@ -19,14 +19,25 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # Set permissions
 RUN chmod -R 775 storage bootstrap/cache
 
-# Create SQLite database and run migrations
-RUN touch database/database.sqlite \
-    && php artisan config:clear \
-    && php artisan migrate --force \
-    && php artisan db:seed --force \
-    && php artisan view:clear \
-    && php artisan route:clear
+# Create start script that migrates on first run then serves
+RUN echo '#!/bin/bash\n\
+DB_PATH="/data/database.sqlite"\n\
+if [ ! -f "$DB_PATH" ]; then\n\
+  echo "First run - creating database..."\n\
+  touch "$DB_PATH"\n\
+  php artisan migrate --force\n\
+  php artisan db:seed --force\n\
+  echo "Database ready!"\n\
+else\n\
+  echo "Database exists - running migrations..."\n\
+  php artisan migrate --force\n\
+fi\n\
+php artisan config:clear\n\
+php artisan route:clear\n\
+php artisan view:clear\n\
+exec php artisan serve --host=0.0.0.0 --port=${PORT:-8000}\n\
+' > /start.sh && chmod +x /start.sh
 
 EXPOSE ${PORT:-8000}
 
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+CMD ["/bin/bash", "/start.sh"]
