@@ -120,9 +120,9 @@ Route::get('/api/airports/search', function (\Illuminate\Http\Request $request) 
 Route::get('/test-email', function () {
     try {
         \Illuminate\Support\Facades\Mail::raw('Test email from AeroTAXI at ' . now(), function ($m) {
-            $m->to('supportaerotaxi@gmail.com')->subject('AeroTAXI Email Test');
+            $m->to('wahaj.naveed16@gmail.com')->subject('AeroTAXI Email Test');
         });
-        return 'Email sent successfully! Check inbox.';
+        return 'Email sent successfully! Check wahaj.naveed16@gmail.com inbox.';
     } catch (\Exception $e) {
         return 'Email FAILED: ' . $e->getMessage();
     }
