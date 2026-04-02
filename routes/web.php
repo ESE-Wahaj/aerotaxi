@@ -116,6 +116,18 @@ Route::get('/api/airports/search', function (\Illuminate\Http\Request $request) 
     return response()->json($airports);
 })->name('api.airports.search');
 
+// Test email route (remove in production)
+Route::get('/test-email', function () {
+    try {
+        \Illuminate\Support\Facades\Mail::raw('Test email from AeroTAXI at ' . now(), function ($m) {
+            $m->to('supportaerotaxi@gmail.com')->subject('AeroTAXI Email Test');
+        });
+        return 'Email sent successfully! Check inbox.';
+    } catch (\Exception $e) {
+        return 'Email FAILED: ' . $e->getMessage();
+    }
+});
+
 // Admin Panel Routes
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');
