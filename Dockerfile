@@ -4,8 +4,10 @@ FROM php:8.3-apache
 RUN apt-get update && apt-get install -y \
     git curl zip unzip libzip-dev libsqlite3-dev libonig-dev \
     && docker-php-ext-install pdo pdo_sqlite mbstring zip opcache \
-    && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
+
+# Fix Apache MPM conflict - disable event, enable prefork
+RUN a2dismod mpm_event 2>/dev/null; a2enmod mpm_prefork rewrite
 
 # Set Apache document root to public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
