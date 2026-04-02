@@ -1,8 +1,9 @@
 #!/bin/bash
 
 DB_PATH="${DB_DATABASE:-/data/database.sqlite}"
+TURSO_URL="${TURSO_HTTP_URL:-}"
+TURSO_TOKEN="${TURSO_AUTH_TOKEN:-}"
 
-# Ensure directory exists
 mkdir -p "$(dirname "$DB_PATH")"
 
 if [ ! -f "$DB_PATH" ]; then
@@ -12,8 +13,14 @@ if [ ! -f "$DB_PATH" ]; then
     php artisan db:seed --force
     echo "Database ready!"
 else
-    echo "Database exists - running migrations..."
+    echo "Database exists - running any new migrations..."
     php artisan migrate --force 2>/dev/null || true
+fi
+
+# Sync tables to Turso if configured
+if [ -n "$TURSO_URL" ] && [ -n "$TURSO_TOKEN" ]; then
+    echo "Syncing data to Turso..."
+    php artisan turso:sync 2>/dev/null || echo "Turso sync skipped"
 fi
 
 php artisan config:clear
